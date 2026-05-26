@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>One-Click Medical AI Agent</title>
+  <!-- Modern Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #070D19;
+      --panel-bg: rgba(15, 23, 42, 0.65);
+      --border-glow: rgba(0, 229, 255, 0.15);
+      --cyan-neon: #00E5FF;
+      --blue-accent: #0077B6;
+      --text-main: #F3F4F6;
+      --text-sub: #9CA3AF;
+      --danger-neon: #FF2E93;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    body {
+      width: 420px;
+      min-height: 520px;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 119, 182, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(0, 229, 255, 0.1) 0px, transparent 50%);
+      color: var(--text-main);
+      overflow-x: hidden;
+      padding: 20px;
+    }
+
+    /* Scrollbar Style */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 229, 255, 0.2); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 229, 255, 0.4); }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo-icon {
+      font-size: 20px;
+      color: var(--cyan-neon);
+      filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.6));
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #FFF 40%, var(--cyan-neon) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-mcp {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--cyan-neon);
+      border: 1px solid var(--cyan-neon);
+      background: rgba(0, 229, 255, 0.05);
+      padding: 2px 6px;
+      border-radius: 20px;
+      box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+    }
+
+    /* Language Toggle */
+    .lang-toggle {
+      display: flex;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    .lang-btn {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-sub);
+      transition: all 0.25s ease;
+      letter-spacing: 0.3px;
+    }
+
+    .lang-btn.active {
+      background: linear-gradient(135deg, var(--blue-accent), var(--cyan-neon));
+      color: #000;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+    }
+
+    .lang-btn:hover:not(.active) {
+      color: var(--cyan-neon);
+      background: rgba(0, 229, 255, 0.08);
+    }
+
+    /* Glassmorphism Input Card */
+    .input-card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      transition: border 0.3s ease;
+    }
+
+    .input-card:focus-within {
+      border: 1px solid rgba(0, 229, 255, 0.4);
+      box-shadow: 0 0 16px rgba(0, 229, 255, 0.1);
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    textarea {
+      width: 100%;
+      height: 80px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    textarea::placeholder { color: rgba(255, 255, 255, 0.25); }
+    textarea:focus {
+      border-color: rgba(0, 229, 255, 0.2);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Neon Button */
+    .btn-submit {
+      width: 100%;
+      background: linear-gradient(135deg, var(--blue-accent) 0%, var(--cyan-neon) 100%);
+      color: #000;
+      font-weight: 700;
+      font-size: 13px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 14px rgba(0, 229, 255, 0.2);
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4);
+      filter: brightness(1.1);
+    }
+    .btn-submit:active { transform: translateY(1px); }
+
+    /* Result Panel */
+    .result-card {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      position: relative;
+    }
+
+    .result-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-sub);
+      gap: 12px;
+      margin-top: 50px;
+      text-align: center;
+    }
+
+    .placeholder-icon {
+      font-size: 32px;
+      opacity: 0.3;
+      animation: heartbeat 2s infinite ease-in-out;
+    }
+    .placeholder-text { font-size: 12px; }
+
+    /* Loader */
+    .loader-area {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 50px auto;
+    }
+
+    .pulse-ring {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(0, 229, 255, 0.1);
+      border: 2px solid var(--cyan-neon);
+      animation: pulse 1.5s infinite ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cyan-neon);
+      font-size: 20px;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+    }
+
+    .loading-status {
+      font-size: 12px;
+      color: var(--cyan-neon);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* Output */
+    .output-content {
+      display: none;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-main);
+    }
+
+    .output-content h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--cyan-neon);
+      margin-top: 14px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+      padding-bottom: 4px;
+    }
+    .output-content h3:first-of-type { margin-top: 0; }
+    .output-content p { margin-bottom: 10px; }
+    .output-content ul { margin-left: 18px; margin-bottom: 12px; }
+    .output-content li { margin-bottom: 4px; }
+    .output-content strong { color: #FFF; font-weight: 600; }
+
+    /* Quick Tags */
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .symptom-tag {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .symptom-tag:hover {
+      background: rgba(0, 229, 255, 0.08);
+      border-color: rgba(0, 229, 255, 0.3);
+      color: var(--cyan-neon);
+    }
+
+    /* Animations */
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      100% { transform: scale(1.2); box-shadow: 0 0 25px rgba(0, 229, 255, 0); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-area">
+        <span class="logo-icon">🏥</span>
+        <h1 class="title">Medical AI Agent</h1>
+      </div>
+      <div class="header-right">
+        <div class="lang-toggle">
+          <button class="lang-btn active" id="langKo" data-lang="ko">한국어</button>
+          <button class="lang-btn" id="langEn" data-lang="en">EN</button>
+        </div>
+        <span class="badge-mcp">MongoDB MCP</span>
+      </div>
+    </div>
+
+    <!-- Input Box -->
+    <div class="input-card">
+      <span class="label" id="inputLabel">환자 발생 증상 입력</span>
+      <textarea id="symptomInput" placeholder="예: 어제 밤부터 갑작스럽게 38.5도 고열이 나고 누런 가래와 기침이 지속돼요."></textarea>
+      
+      <div class="tag-container" id="tagContainer">
+        <span class="symptom-tag" data-text-ko="갑자기 한쪽 팔다리에 마비가 오고 발음이 어눌해집니다." data-text-en="Sudden numbness in one arm and leg with slurred speech." data-label-ko="뇌졸중 의증" data-label-en="Stroke">뇌졸중 의증</span>
+        <span class="symptom-tag" data-text-ko="명치가 타는 것처럼 아프고 신물이 올라와 목이 따갑습니다." data-text-en="Burning pain in the upper stomach with acid reflux and a sore throat." data-label-ko="역류성 식도염" data-label-en="GERD">역류성 식도염</span>
+        <span class="symptom-tag" data-text-ko="지속적인 갈증이 나고 화장실을 자주 가며 체중이 엄청 빠졌어요." data-text-en="Persistent thirst, frequent urination, and unexplained weight loss." data-label-ko="당뇨 의증" data-label-en="Diabetes">당뇨 의증</span>
+      </div>
+
+      <button id="submitBtn" class="btn-submit">
+        <span>🩺</span>
+        <span id="submitText">가이드라인 원클릭 분석</span>
+      </button>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="result-card">
+      <span class="label" id="resultLabel">임상 의사 결정 보고서</span>
+      
+      <!-- Placeholder -->
+      <div id="placeholder" class="result-placeholder">
+        <div class="placeholder-icon">🩺</div>
+        <div class="placeholder-text" id="placeholderText">환자의 증상을 입력하면 데이터베이스의<br>의료 가이드라인을 기반으로 분석이 진행됩니다.</div>
+      </div>
+
+      <!-- Pulse Loader -->
+      <div id="loader" class="loader-area">
+        <div class="pulse-ring">🩺</div>
+        <div class="loading-status" id="loadingText">Gemini & MongoDB MCP 분석 중...</div>
+      </div>
+
+      <!-- Rendered Markdown Result -->
+      <div id="output" class="output-content"></div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

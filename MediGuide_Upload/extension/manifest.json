@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "One-Click Medical AI Agent",
+  "version": "1.0",
+  "description": "Google Cloud + MongoDB MCP powered professional medical symptom search and clinical guidelines recommender.",
+  "permissions": [
+    "activeTab"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  }
+}
