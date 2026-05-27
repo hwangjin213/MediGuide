@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +9,7 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 
-from mcp_server import search_guidelines, get_all_diseases
+from mcp_server import search_guidelines
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("medical-backend")
@@ -50,7 +51,6 @@ async def diagnose_patient(payload: DiagnoseRequest):
     if not symptom_text:
         raise HTTPException(status_code=400, detail="Symptoms input cannot be empty.")
         
-    # 언어에 따른 프롬프트 동적 생성
     if target_lang == "en":
         lang_instruction = "IMPORTANT: You MUST write the entire final output report in ENGLISH."
         user_prompt = f"Symptoms: '{symptom_text}'. Use search_medical_guidelines_db tool to search and write a professional markdown report in English."
@@ -72,38 +72,36 @@ async def diagnose_patient(payload: DiagnoseRequest):
         temperature=0.2,
     )
     
-    try:
-        # 1. 찐 AI 통신: 메인 모델 (2.5-flash) 시도
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=user_prompt,
-            config=config
-        )
-        ai_response_text = response.text
-        
-    except Exception as primary_error:
-        logger.warning(f"2.5-flash failed (Quota/Error). Trying 1.5-flash-8b... Error: {primary_error}")
+    # --- [추가됨] 자동 3회 재시도 (Auto-Retry) 로직 ---
+    max_retries = 3
+    models_to_try = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']
+    last_error = None
+    
+    for attempt in range(max_retries):
+        model_name = models_to_try[attempt % len(models_to_try)]
         try:
-            # 2. 찐 AI 통신: 백업 모델 (1.5-flash-8b) 시도
+            logger.info(f"Attempt {attempt+1}: Requesting AI with model {model_name}...")
             response = client.models.generate_content(
-                model='gemini-1.5-flash-8b',
+                model=model_name,
                 contents=user_prompt,
                 config=config
             )
-            ai_response_text = response.text
-            
-        except Exception as secondary_error:
-            # 둘 다 뻗으면 프론트엔드로 진짜 429 에러를 던져서 "잠시 대기" 팝업을 띄움
-            logger.error(f"Both models failed. Error: {secondary_error}")
-            raise HTTPException(
-                status_code=429, 
-                detail=f"RESOURCE_EXHAUSTED: {secondary_error}"
+            return DiagnoseResponse(
+                status="success",
+                ai_analysis=response.text,
+                guidelines_found=True
             )
-            
-    return DiagnoseResponse(
-        status="success",
-        ai_analysis=ai_response_text,
-        guidelines_found=True
+        except Exception as e:
+            last_error = str(e)
+            logger.warning(f"Attempt {attempt+1} failed with {model_name}. Error: {last_error}")
+            if attempt < max_retries - 1:
+                # 실패하면 2초 동안 숨 고르기 후 재시도
+                await asyncio.sleep(2)
+                
+    # 3번의 재시도(총 6초 대기) 후에도 실패하면 최종 에러 반환
+    raise HTTPException(
+        status_code=429, 
+        detail=f"API 과부하로 자동 3회 재시도했으나 실패했습니다. 잠시 후 다시 시도해 주세요. 상세: {last_error}"
     )
 
 @app.get("/api/health")
